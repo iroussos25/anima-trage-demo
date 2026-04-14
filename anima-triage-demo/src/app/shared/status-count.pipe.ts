@@ -4,7 +4,7 @@ import { TriageRecord, CaseStatus } from './triage.models';
 @Pipe({
   name: 'statusCount',
   standalone: true,
-  pure: false,
+  pure: true,
 })
 export class StatusCountPipe implements PipeTransform {
   transform(cases: TriageRecord[], status: CaseStatus): number {

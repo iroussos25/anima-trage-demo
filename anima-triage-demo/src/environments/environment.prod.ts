@@ -1,5 +1,4 @@
 export const environment = {
   production: true,
-  // Set via Vercel environment variable: VITE_API_URL
-  apiUrl: (window as any).__env?.API_URL ?? '',
+  apiUrl: 'https://t4svo9ysn0.execute-api.eu-west-2.amazonaws.com/prod',
 };

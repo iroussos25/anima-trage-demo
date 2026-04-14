@@ -127,8 +127,8 @@ anima-triage-demo/
 │   │   ├── app.config.ts                  # provideHttpClient, provideRouter
 │   │   └── app.component.ts              # Nav shell
 │   └── environments/
-│       ├── environment.ts                 # Local dev (localhost:3000)
-│       └── environment.prod.ts            # Production (Vercel env var)
+│       ├── environment.ts                 # Dev (API Gateway URL)
+│       └── environment.prod.ts            # Production (same, baked at build time)
 ├── lambda/
 │   ├── shared/types.ts                    # Shared TypeScript interfaces
 │   ├── submit/index.ts                    # POST handler + FHIR bundle builder
@@ -169,10 +169,8 @@ sam deploy --guided
 ```
 
 ### Deploy frontend to Vercel
-Push to GitHub, connect repo to Vercel. Set environment variable:
-```
-API_URL = <your ApiUrl from sam deploy>
-```
+Push to GitHub, connect repo to Vercel. The API URL is configured in
+`src/environments/environment.prod.ts` and baked into the production build.
 
 ---
 
