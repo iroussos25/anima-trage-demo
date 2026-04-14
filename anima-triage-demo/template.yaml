@@ -49,7 +49,7 @@ Resources:
     Properties:
       FunctionName: anima-triage-submit
       Handler: submit/index.handler
-      CodeUri: lambda/dist/
+      CodeUri: lambda/
       Description: Accepts patient triage form submission; writes FHIR R4 bundle to DynamoDB
       Policies:
         - DynamoDBWritePolicy:
@@ -81,7 +81,7 @@ Resources:
     Properties:
       FunctionName: anima-triage-fetch
       Handler: fetch/index.handler
-      CodeUri: lambda/dist/
+      CodeUri: lambda/
       Description: Returns all triage submissions sorted by severity descending
       Policies:
         - DynamoDBReadPolicy:
@@ -113,7 +113,7 @@ Resources:
     Properties:
       FunctionName: anima-triage-update-status
       Handler: update-status/index.handler
-      CodeUri: lambda/dist/
+      CodeUri: lambda/
       Description: Updates the status field of a triage case (new / in-progress / resolved)
       Policies:
         - DynamoDBCrudPolicy:
