@@ -1,0 +1,142 @@
+<div class="max-w-5xl mx-auto px-4 py-10">
+
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-white">Clinician Dashboard</h1>
+      <p class="text-slate-400 text-sm mt-1">
+        Cases sorted by severity. Click a status badge to advance it.
+      </p>
+    </div>
+    <button
+      (click)="loadCases()"
+      class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm rounded transition-colors"
+    >
+      Refresh
+    </button>
+  </div>
+
+  <!-- Loading -->
+  @if (loadState() === 'loading') {
+    <div class="flex items-center justify-center py-24 text-slate-500 text-sm">
+      Loading cases…
+    </div>
+  }
+
+  <!-- Error -->
+  @if (loadState() === 'error') {
+    <div class="bg-red-900/40 border border-red-700 rounded-lg px-4 py-3 text-red-300 text-sm">
+      Failed to load cases. Check your API configuration and try refreshing.
+    </div>
+  }
+
+  <!-- Loaded: empty -->
+  @if (loadState() === 'loaded' && cases().length === 0) {
+    <div class="flex flex-col items-center justify-center py-24 text-slate-500 text-sm">
+      <span class="text-4xl mb-3">📋</span>
+      No cases submitted yet.
+    </div>
+  }
+
+  <!-- Loaded: table -->
+  @if (loadState() === 'loaded' && cases().length > 0) {
+    <div class="overflow-x-auto rounded-lg border border-slate-700">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-800 text-slate-400 uppercase text-xs tracking-wider">
+          <tr>
+            <th class="px-4 py-3 text-left">Case ID</th>
+            <th class="px-4 py-3 text-left">Initials</th>
+            <th class="px-4 py-3 text-left">Chief Complaint</th>
+            <th
+              class="px-4 py-3 text-left cursor-pointer hover:text-white transition-colors select-none"
+              (click)="setSort('severity')"
+            >
+              Severity
+              @if (sortField() === 'severity') {
+                <span class="ml-1 text-sky-400">{{ sortAsc() ? '↑' : '↓' }}</span>
+              }
+            </th>
+            <th class="px-4 py-3 text-left">Onset</th>
+            <th
+              class="px-4 py-3 text-left cursor-pointer hover:text-white transition-colors select-none"
+              (click)="setSort('submittedAt')"
+            >
+              Received
+              @if (sortField() === 'submittedAt') {
+                <span class="ml-1 text-sky-400">{{ sortAsc() ? '↑' : '↓' }}</span>
+              }
+            </th>
+            <th class="px-4 py-3 text-left">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-700/50">
+          @for (c of cases(); track trackByCase($index, c)) {
+            <tr class="bg-slate-900 hover:bg-slate-800/60 transition-colors">
+
+              <!-- Case ID -->
+              <td class="px-4 py-3 font-mono text-sky-400 text-xs whitespace-nowrap">
+                {{ c.caseId.substring(0, 8) }}…
+              </td>
+
+              <!-- Initials -->
+              <td class="px-4 py-3 font-medium text-white">{{ c.patientInitials }}</td>
+
+              <!-- Chief complaint -->
+              <td class="px-4 py-3 text-slate-200 max-w-[220px]">
+                <span class="block truncate" [title]="c.chiefComplaint">
+                  {{ c.chiefComplaint }}
+                </span>
+              </td>
+
+              <!-- Severity badge -->
+              <td class="px-4 py-3">
+                <span
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold"
+                  [ngClass]="severityClass(c.severity)"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full" [ngClass]="severityDotClass(c.severity)"></span>
+                  {{ c.severity }}/10
+                </span>
+              </td>
+
+              <!-- Onset -->
+              <td class="px-4 py-3 text-slate-300 whitespace-nowrap">
+                {{ onsetLabels[c.onset] }}
+              </td>
+
+              <!-- Time received -->
+              <td class="px-4 py-3 text-slate-400 whitespace-nowrap text-xs">
+                {{ formatTime(c.submittedAt) }}
+              </td>
+
+              <!-- Status (clickable) -->
+              <td class="px-4 py-3">
+                <button
+                  [ngClass]="statusClass(c.status)"
+                  (click)="advanceStatus(c)"
+                  [disabled]="updatingCaseId() === c.caseId"
+                  [title]="'Advance to: ' + statusLabels[statusCycle[c.status]]"
+                >
+                  @if (updatingCaseId() === c.caseId) {
+                    …
+                  } @else {
+                    {{ statusLabels[c.status] }}
+                  }
+                </button>
+              </td>
+
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Summary bar -->
+    <div class="mt-4 flex gap-4 text-xs text-slate-500">
+      <span>{{ cases().length }} total</span>
+      <span class="text-sky-400">{{ cases() | statusCount: 'new' }} new</span>
+      <span class="text-violet-400">{{ cases() | statusCount: 'in-progress' }} in progress</span>
+      <span class="text-slate-400">{{ cases() | statusCount: 'resolved' }} resolved</span>
+    </div>
+  }
+
+</div>

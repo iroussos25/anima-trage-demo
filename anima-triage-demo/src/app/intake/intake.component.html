@@ -1,0 +1,165 @@
+<div class="max-w-2xl mx-auto px-4 py-10">
+
+  <!-- Confirmation state -->
+  @if (submitState() === 'success') {
+    <div class="bg-emerald-900/40 border border-emerald-700 rounded-lg p-8 text-center">
+      <div class="text-emerald-400 text-4xl mb-3">✓</div>
+      <h2 class="text-xl font-semibold text-emerald-300 mb-2">Case Received</h2>
+      <p class="text-slate-300 mb-1">Your case has been received.</p>
+      <p class="text-slate-400 text-sm">
+        Reference:
+        <span class="font-mono text-sky-400">{{ confirmedCaseId() }}</span>
+      </p>
+      <button
+        (click)="reset()"
+        class="mt-6 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded transition-colors"
+      >
+        Submit another case
+      </button>
+    </div>
+  }
+
+  <!-- Form state -->
+  @if (submitState() !== 'success') {
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-white">Patient Intake</h1>
+      <p class="text-slate-400 text-sm mt-1">
+        All information is de-identified. Use initials only.
+      </p>
+    </div>
+
+    @if (submitState() === 'error') {
+      <div class="mb-6 bg-red-900/40 border border-red-700 rounded-lg px-4 py-3 text-red-300 text-sm">
+        Submission failed. Please try again or contact your administrator.
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="space-y-6">
+
+      <!-- Patient initials -->
+      <div>
+        <label for="patientInitials" class="block text-sm font-medium text-slate-300 mb-1">
+          Patient initials <span class="text-red-400">*</span>
+        </label>
+        <input
+          id="patientInitials"
+          type="text"
+          formControlName="patientInitials"
+          placeholder="e.g. J.D."
+          maxlength="5"
+          class="w-full bg-slate-800 border rounded-md px-3 py-2 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors"
+          [class.border-slate-600]="!isInvalid('patientInitials')"
+          [class.border-red-500]="isInvalid('patientInitials')"
+        />
+        @if (isInvalid('patientInitials')) {
+          <p class="mt-1 text-xs text-red-400">
+            Initials are required (2–5 letters and dots only).
+          </p>
+        }
+      </div>
+
+      <!-- Chief complaint -->
+      <div>
+        <label for="chiefComplaint" class="block text-sm font-medium text-slate-300 mb-1">
+          Chief complaint <span class="text-red-400">*</span>
+        </label>
+        <input
+          id="chiefComplaint"
+          type="text"
+          formControlName="chiefComplaint"
+          placeholder="e.g. Chest pain on exertion"
+          maxlength="300"
+          class="w-full bg-slate-800 border rounded-md px-3 py-2 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors"
+          [class.border-slate-600]="!isInvalid('chiefComplaint')"
+          [class.border-red-500]="isInvalid('chiefComplaint')"
+        />
+        @if (isInvalid('chiefComplaint')) {
+          <p class="mt-1 text-xs text-red-400">Chief complaint is required.</p>
+        }
+      </div>
+
+      <!-- Onset -->
+      <div>
+        <label for="onset" class="block text-sm font-medium text-slate-300 mb-1">
+          Onset <span class="text-red-400">*</span>
+        </label>
+        <select
+          id="onset"
+          formControlName="onset"
+          class="w-full bg-slate-800 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors"
+          [class.border-slate-600]="!isInvalid('onset')"
+          [class.border-red-500]="isInvalid('onset')"
+          [class.text-slate-500]="!form.get('onset')?.value"
+          [class.text-white]="!!form.get('onset')?.value"
+        >
+          <option value="" disabled>Select onset period</option>
+          @for (opt of onsetOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+        @if (isInvalid('onset')) {
+          <p class="mt-1 text-xs text-red-400">Please select an onset period.</p>
+        }
+      </div>
+
+      <!-- Severity -->
+      <div>
+        <label for="severity" class="block text-sm font-medium text-slate-300 mb-1">
+          Severity
+          <span
+            class="ml-2 text-base font-bold"
+            [class.text-emerald-400]="severityValue <= 3"
+            [class.text-amber-400]="severityValue >= 4 && severityValue <= 6"
+            [class.text-red-400]="severityValue >= 7"
+          >{{ severityValue }} / 10</span>
+        </label>
+        <input
+          id="severity"
+          type="range"
+          formControlName="severity"
+          min="1"
+          max="10"
+          step="1"
+          class="w-full h-2 rounded-lg appearance-none cursor-pointer bg-slate-700 accent-sky-500"
+        />
+        <div class="flex justify-between text-xs text-slate-500 mt-1">
+          <span>1 — Minimal</span>
+          <span>10 — Severe</span>
+        </div>
+      </div>
+
+      <!-- Allergies -->
+      <div>
+        <label for="allergies" class="block text-sm font-medium text-slate-300 mb-1">
+          Known allergies
+          <span class="text-slate-500 font-normal">(optional)</span>
+        </label>
+        <input
+          id="allergies"
+          type="text"
+          formControlName="allergies"
+          placeholder="e.g. Penicillin, NSAIDs"
+          maxlength="300"
+          class="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors"
+        />
+      </div>
+
+      <!-- Submit -->
+      <div class="pt-2">
+        <button
+          type="submit"
+          [disabled]="submitState() === 'loading'"
+          class="w-full bg-sky-600 hover:bg-sky-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-medium py-2.5 rounded-md text-sm transition-colors"
+        >
+          @if (submitState() === 'loading') {
+            Submitting…
+          } @else {
+            Submit case
+          }
+        </button>
+      </div>
+
+    </form>
+  }
+
+</div>

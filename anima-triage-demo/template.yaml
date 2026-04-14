@@ -1,0 +1,169 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Anima Triage Demo — serverless triage intake and clinician dashboard.
+  API Gateway HTTP API → Lambda (Node.js 20 TypeScript) → DynamoDB.
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 10
+    MemorySize: 256
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref TriageTable
+        ALLOWED_ORIGIN: !Ref AllowedOrigin
+    Architectures:
+      - arm64  # Graviton2 — cheaper and faster for I/O-bound Lambda
+
+Parameters:
+  AllowedOrigin:
+    Type: String
+    Default: '*'
+    Description: >
+      CORS allowed origin. Set to your Vercel deployment URL in production
+      (e.g. https://anima-triage.vercel.app). Defaults to * for local dev.
+
+Resources:
+
+  # ── DynamoDB ────────────────────────────────────────────────────────────────
+  TriageTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: triage-submissions
+      BillingMode: PAY_PER_REQUEST  # On-demand — no capacity planning for a demo
+      AttributeDefinitions:
+        - AttributeName: caseId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: caseId
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: false  # Enable in production
+      SSESpecification:
+        SSEEnabled: true  # Encryption at rest — always on
+
+  # ── Lambda: POST /triage ───────────────────────────────────────────────────
+  SubmitFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: anima-triage-submit
+      Handler: submit/index.handler
+      CodeUri: lambda/dist/
+      Description: Accepts patient triage form submission; writes FHIR R4 bundle to DynamoDB
+      Policies:
+        - DynamoDBWritePolicy:
+            TableName: !Ref TriageTable
+      Events:
+        PostTriage:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref TriageApi
+            Path: /triage
+            Method: POST
+        OptionsPost:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref TriageApi
+            Path: /triage
+            Method: OPTIONS
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        EntryPoints:
+          - submit/index.ts
+
+  # ── Lambda: GET /triage ────────────────────────────────────────────────────
+  FetchFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: anima-triage-fetch
+      Handler: fetch/index.handler
+      CodeUri: lambda/dist/
+      Description: Returns all triage submissions sorted by severity descending
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref TriageTable
+      Events:
+        GetTriage:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref TriageApi
+            Path: /triage
+            Method: GET
+        OptionsGet:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref TriageApi
+            Path: /triage
+            Method: OPTIONS
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        EntryPoints:
+          - fetch/index.ts
+
+  # ── Lambda: PATCH /triage/{caseId}/status ─────────────────────────────────
+  UpdateStatusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: anima-triage-update-status
+      Handler: update-status/index.handler
+      CodeUri: lambda/dist/
+      Description: Updates the status field of a triage case (new / in-progress / resolved)
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TriageTable
+      Events:
+        PatchStatus:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref TriageApi
+            Path: /triage/{caseId}/status
+            Method: PATCH
+        OptionsPatch:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref TriageApi
+            Path: /triage/{caseId}/status
+            Method: OPTIONS
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        EntryPoints:
+          - update-status/index.ts
+
+  # ── API Gateway HTTP API ───────────────────────────────────────────────────
+  TriageApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: prod
+      Description: Anima Triage Demo HTTP API
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref AllowedOrigin
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+        AllowMethods:
+          - GET
+          - POST
+          - PATCH
+          - OPTIONS
+
+Outputs:
+  ApiUrl:
+    Description: HTTP API Gateway endpoint URL
+    Value: !Sub 'https://${TriageApi}.execute-api.${AWS::Region}.amazonaws.com/prod'
+    Export:
+      Name: AnimaTriageApiUrl
+
+  TriageTableName:
+    Description: DynamoDB table name
+    Value: !Ref TriageTable

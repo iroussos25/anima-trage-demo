@@ -1,0 +1,19 @@
+{
+  "name": "anima-triage-lambdas",
+  "version": "1.0.0",
+  "description": "Lambda functions for the Anima Triage Demo",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.600.0",
+    "@aws-sdk/util-dynamodb": "^3.600.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.140",
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0"
+  }
+}
