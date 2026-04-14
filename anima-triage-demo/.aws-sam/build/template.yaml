@@ -59,13 +59,6 @@ Resources:
               Ref: TriageApi
             Path: /triage
             Method: POST
-        OptionsPost:
-          Type: HttpApi
-          Properties:
-            ApiId:
-              Ref: TriageApi
-            Path: /triage
-            Method: OPTIONS
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -93,13 +86,6 @@ Resources:
               Ref: TriageApi
             Path: /triage
             Method: GET
-        OptionsGet:
-          Type: HttpApi
-          Properties:
-            ApiId:
-              Ref: TriageApi
-            Path: /triage
-            Method: OPTIONS
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -128,13 +114,6 @@ Resources:
               Ref: TriageApi
             Path: /triage/{caseId}/status
             Method: PATCH
-        OptionsPatch:
-          Type: HttpApi
-          Properties:
-            ApiId:
-              Ref: TriageApi
-            Path: /triage/{caseId}/status
-            Method: OPTIONS
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
